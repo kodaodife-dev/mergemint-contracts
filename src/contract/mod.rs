@@ -11,5 +11,7 @@ use crate::types::{Bounty, BountyId, BountyMeta, Contributor, Milestone};
 #[contract]
 pub struct MergeMintContract;
 
-include!("mutations.rs");
+include!("lifecycle.rs");
+include!("disputes.rs");
+include!("milestones.rs");
 include!("queries.rs");
