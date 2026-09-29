@@ -6,7 +6,7 @@ use crate::errors;
 use crate::errors::{fail, ContractError};
 use crate::events;
 use crate::storage;
-use crate::types::{Bounty, BountyId, BountyMeta, Contributor, Milestone};
+use crate::types::{Bounty, BountyId, BountyMeta, Contributor, Dispute, Milestone};
 
 /// Maximum protocol fee, expressed in basis points (10 percent).
 pub const MAX_FEE_BPS: u32 = 1000;
