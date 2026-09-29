@@ -34,8 +34,8 @@ export function BountyList() {
   // Ownership toggles only make sense for a connected wallet; fall back to
   // "all" if the wallet disconnects while a scoped filter is active.
   useEffect(() => {
-    if (!address && ownership !== 'all') {
-      setOwnership('all');
+    if (!address && ownership !== "all") {
+      setOwnership("all");
     }
   }, [address, ownership]);
 
@@ -170,6 +170,13 @@ export function BountyList() {
             highlighted={isHighlighted(bounty.id)}
           />
         ))}
+        {loading && (
+          <>
+            <BountyCard key="loading-skeleton-1" loading />
+            <BountyCard key="loading-skeleton-2" loading />
+            <BountyCard key="loading-skeleton-3" loading />
+          </>
+        )}
       </div>
 
       {nextCursor && (
