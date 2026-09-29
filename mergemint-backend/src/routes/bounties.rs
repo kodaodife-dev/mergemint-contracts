@@ -239,11 +239,23 @@ pub async fn list_bounties_by_assignee(
     }
 
     let limit = params.limit.unwrap_or(20).min(MAX_LIST_LIMIT);
+    let sort = params.sort.unwrap_or_default();
+    let order = params.order.unwrap_or_default();
+    if params.cursor.is_some() && !cursor_supported(sort, order) {
+        return Err((
+            StatusCode::BAD_REQUEST,
+            Json(serde_json::json!({
+                "error": "cursor pagination is only supported with the default ordering (sort=created&order=desc)"
+            })),
+        ));
+    }
     Ok(Json(db_list_bounties_by_assignee(
         &state.db,
         &address,
         limit,
         params.cursor,
+        sort,
+        order,
     )))
 }
 
@@ -340,12 +352,45 @@ mod tests {
                 creator: "carol".to_string(),
                 assignee: None,
                 created_at: Utc::now() + chrono::Duration::seconds(i as i64),
+                reward: i as i128,
+                deadline: None,
             });
         }
     }
 
     fn valid_address() -> String {
         format!("G{}", "A".repeat(55))
+    }
+
+    /// Seed a single bounty with explicit sort keys.
+    fn seed_bounty(
+        state: &AppState,
+        id: &str,
+        reward: i128,
+        deadline: Option<DateTime<Utc>>,
+        created_at: DateTime<Utc>,
+    ) {
+        acquire_db(&state.db).bounties.push(Bounty {
+            id: id.to_string(),
+            creator: "carol".to_string(),
+            assignee: None,
+            created_at,
+            reward,
+            deadline,
+        });
+    }
+
+    fn params(sort: Option<BountySortField>, order: Option<SortOrder>) -> ListParams {
+        ListParams {
+            limit: None,
+            cursor: None,
+            sort,
+            order,
+        }
+    }
+
+    fn ids(page: &BountyPage) -> Vec<String> {
+        page.bounties.iter().map(|b| b.id.clone()).collect()
     }
 
     #[test]
@@ -380,6 +425,8 @@ mod tests {
             Query(ListParams {
                 limit: None,
                 cursor: None,
+                sort: None,
+                order: None,
             }),
         )
         .await;
@@ -401,6 +448,8 @@ mod tests {
             Query(ListParams {
                 limit: None,
                 cursor: None,
+                sort: None,
+                order: None,
             }),
         )
         .await
@@ -423,9 +472,12 @@ mod tests {
             Query(ListParams {
                 limit: Some(10_000),
                 cursor: None,
+                sort: None,
+                order: None,
             }),
         )
-        .await;
+        .await
+        .expect("an oversized limit is still a valid listing request");
 
         assert_eq!(
             page.bounties.len(),
@@ -449,9 +501,12 @@ mod tests {
             Query(ListParams {
                 limit: Some(5),
                 cursor: None,
+                sort: None,
+                order: None,
             }),
         )
-        .await;
+        .await
+        .expect("a within-bounds limit is a valid listing request");
 
         assert_eq!(page.bounties.len(), 5);
     }
