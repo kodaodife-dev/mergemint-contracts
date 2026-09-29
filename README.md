@@ -153,5 +153,5 @@ contract, read [docs/security.md](docs/security.md) first.
 
 ## Handsoff notes
 
-<!-- handsoff-issue-864 -->
-- #864: [Contract] Add snapshot tests for events
+<!-- handsoff-issue-869 -->
+- #869: [Backend] Request ID middleware
